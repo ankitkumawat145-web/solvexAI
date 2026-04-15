@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Problem": {
+      "title": "Problem",
+      "description": "A problem submitted by the user and its AI-generated solution",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "problemText": { "type": "string" },
+        "categories": { "type": "array", "items": { "type": "string" } },
+        "rootCause": { "type": "string" },
+        "steps": { "type": "array", "items": { "type": "object" } },
+        "timeline": { "type": "array", "items": { "type": "object" } },
+        "effort": { "type": "string" },
+        "cost": { "type": "string" },
+        "resources": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "problemText"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A daily task derived from a problem solution",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "problemId": { "type": "string" },
+        "title": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "date": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "completed"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/problems/{problemId}": {
+      "schema": "Problem",
+      "description": "Problem analysis documents"
+    },
+    "/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Daily tasks for users"
+    }
+  }
+}

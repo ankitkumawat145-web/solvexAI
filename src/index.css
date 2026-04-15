@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #FFFFFF;
+  --color-foreground: #1A1A1A;
+  --color-accent: #6366F1; /* Modern Indigo */
+  --color-accent-foreground: #FFFFFF;
+  --color-muted: #F3F4F6;
+  --color-muted-foreground: #6B7280;
+  --color-border: #E5E7EB;
+  --color-glass: rgba(255, 255, 255, 0.7);
+  --color-glass-border: rgba(0, 0, 0, 0.05);
+  
+  --font-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "Courier New", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  h1 {
+    @apply text-5xl md:text-7xl font-extrabold tracking-tight mb-6 text-slate-900;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl font-bold tracking-tight mb-4 text-slate-800;
+  }
+}
+
+@layer components {
+  .tagline {
+    @apply font-mono text-[11px] text-accent font-black uppercase tracking-[0.3em] mb-4 flex items-center gap-2;
+  }
+
+  .tagline::before {
+    content: "";
+    @apply w-8 h-[2px] bg-accent/30;
+  }
+
+  .glass-card {
+    @apply bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[32px] transition-all duration-500;
+  }
+  
+  .glass-button {
+    @apply bg-slate-900 text-white hover:bg-slate-800 px-8 py-4 rounded-2xl transition-all duration-300 font-bold shadow-xl shadow-slate-200;
+  }
+  
+  .premium-input {
+    @apply bg-white border-2 border-slate-100 rounded-[32px] px-8 py-6 focus:outline-none focus:ring-4 focus:ring-accent/5 focus:border-accent/40 transition-all text-slate-900 text-lg;
+  }
+
+  .btn-primary {
+    @apply bg-slate-900 text-white font-bold px-8 py-4 rounded-2xl hover:bg-accent transition-all shadow-xl shadow-slate-200 hover:shadow-accent/20;
+  }
+  
+  .image-overlay {
+    @apply absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] transition-opacity duration-500;
+  }
+}
+
