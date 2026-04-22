@@ -1,52 +1,48 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { CheckCircle2, Circle, Clock, Target, TrendingUp, Calendar, Trash2, Award, ArrowRight } from "lucide-react";
-import { db, auth } from "@/firebase";
-import { collection, query, where, onSnapshot, updateDoc, doc, deleteDoc, orderBy } from "firebase/firestore";
-import { GlassCard } from "@/components/GlassCard";
+import { CheckCircle2, Circle, Clock, Target, TrendingUp, Calendar, Trash2, Award, ArrowRight, BrainCircuit, Activity, Database, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NeuralStorage, Task } from "@/lib/storage";
+
+function LaunchCard({ title, desc, icon, to }: { title: string; desc: string; icon: React.ReactNode; to: string }) {
+  return (
+    <Link to={to} className="group">
+      <div className="glass-card p-10 h-full border-white/5 bg-white/[0.03] hover:bg-white/10 transition-all flex flex-col justify-between overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-accent/10 transition-colors" />
+        <div>
+          <div className="w-16 h-16 rounded-[24px] bg-white/5 border border-white/10 flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-accent/20 transition-all duration-700">
+            {icon}
+          </div>
+          <h3 className="text-2xl font-black text-white mb-4 leading-none uppercase tracking-tighter italic">{title}</h3>
+          <p className="text-[13px] font-bold text-muted-foreground uppercase tracking-wide leading-relaxed mb-10 opacity-60">{desc}</p>
+        </div>
+        <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] text-accent/60 group-hover:text-accent transition-colors">
+          Initialize <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export function Dashboard() {
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth.currentUser) return;
-
-    const q = query(
-      collection(db, "tasks"),
-      where("userId", "==", auth.currentUser.uid),
-      orderBy("createdAt", "desc")
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const taskData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setTasks(taskData);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    const loadedTasks = NeuralStorage.getTasks();
+    setTasks(loadedTasks);
+    setLoading(false);
   }, []);
 
-  const toggleTask = async (taskId: string, currentStatus: boolean) => {
-    try {
-      await updateDoc(doc(db, "tasks", taskId), {
-        completed: !currentStatus
-      });
-    } catch (error) {
-      console.error("Error updating task:", error);
-    }
+  const toggleTask = (taskId: string, currentStatus: boolean) => {
+    NeuralStorage.updateTask(taskId, { completed: !currentStatus });
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, completed: !currentStatus } : t));
   };
 
-  const deleteTask = async (taskId: string) => {
-    try {
-      await deleteDoc(doc(db, "tasks", taskId));
-    } catch (error) {
-      console.error("Error deleting task:", error);
-    }
+  const deleteTask = (taskId: string) => {
+    NeuralStorage.deleteTask(taskId);
+    setTasks(prev => prev.filter(t => t.id !== taskId));
   };
 
   const completedCount = tasks.filter(t => t.completed).length;
@@ -54,160 +50,183 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] bg-background gap-8">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-accent"></div>
+        <div className="tagline tracking-[0.6em] !mb-0">Synchronizing Terminal Data</div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 bg-white">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-16">
-        <div>
-          <div className="tagline">Performance Overview</div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Your Progress</h1>
-          <p className="text-slate-500 font-medium mt-2">Keep moving forward. One task at a time.</p>
-        </div>
-        
-        <GlassCard className="flex items-center gap-10 px-10 py-6 border-slate-100 shadow-2xl">
-          <div className="text-center">
-            <div className="text-4xl font-black text-accent">{progress}%</div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black mt-1">Completion</div>
-          </div>
-          <div className="w-px h-12 bg-slate-100" />
-          <div className="text-center">
-            <div className="text-4xl font-black text-slate-900">{tasks.length}</div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black mt-1">Total Tasks</div>
-          </div>
-        </GlassCard>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-16">
-        <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-              <Target className="text-accent" size={20} />
+    <div className="min-h-screen bg-background text-foreground pt-32 pb-24">
+      <div className="max-w-7xl mx-auto px-6 md:px-12">
+        <div className="flex flex-col md:flex-row justify-between items-end gap-12 mb-24">
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="tagline !text-accent opacity-80">Strategic Command Center</div>
+              <div className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2 bg-accent/10 text-accent border border-accent/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse shadow-[0_0_8px_#6366f1]" />
+                System: Optimal
+              </div>
             </div>
-            Daily Actions
-          </h2>
+            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter uppercase leading-[0.85] italic">Neural <br /> Progress.</h1>
+            <p className="text-lg font-black text-white/30 uppercase tracking-[0.3em] italic">Architecting 128-bit clarity in real-time execution.</p>
+          </div>
           
-          <div className="space-y-4">
-            <AnimatePresence mode="popLayout">
-              {tasks.length > 0 ? (
-                tasks.map((task) => (
-                  <motion.div
-                    key={task.id}
-                    layout
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ 
-                      opacity: task.completed ? 0.5 : 1, 
-                      y: 0,
-                      scale: task.completed ? 0.98 : 1
-                    }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                  >
-                    <GlassCard 
+          <div className="flex flex-col sm:flex-row gap-6 w-full md:w-auto">
+            <div className="flex items-center gap-16 px-16 py-10 glass-card bg-white/[0.02] border-white/5 shadow-2xl">
+              <div className="text-center">
+                <div className="text-6xl font-black text-accent tracking-tighter italic">{progress}%</div>
+                <div className="text-[10px] uppercase tracking-[0.4em] text-white/20 font-black mt-3">Efficiency</div>
+              </div>
+              <div className="w-px h-20 bg-white/5" />
+              <div className="text-center">
+                <div className="text-6xl font-black text-white tracking-tighter italic">{tasks.length}</div>
+                <div className="text-[10px] uppercase tracking-[0.4em] text-white/20 font-black mt-3">Active Nodes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
+          <LaunchCard 
+            title="Deconstruct" 
+            desc="Shatter complex problems into an atomic horizontal matrix." 
+            icon={<BrainCircuit className="text-accent" size={32} />}
+            to="/"
+          />
+          <LaunchCard 
+            title="Strategic Vault" 
+            desc="Access high-fidelity roadmaps and encrypted tactical data." 
+            icon={<Database className="text-purple-500" size={32} />}
+            to="/history"
+          />
+          <LaunchCard 
+            title="Active Sync" 
+            desc="Manage execution paths and synchronize unit protocols." 
+            icon={<Activity className="text-emerald-500" size={32} />}
+            to="/dashboard"
+          />
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-24">
+          <div className="lg:col-span-2 space-y-12">
+            <h2 className="text-3xl font-black text-white flex items-center gap-6 mb-12 uppercase tracking-tighter italic">
+              <div className="w-16 h-16 rounded-[28px] bg-accent/20 flex items-center justify-center border border-accent/30 shadow-2xl shadow-accent/10">
+                <Target className="text-accent" size={28} />
+              </div>
+              Tactical Roadmap
+            </h2>
+            
+            <div className="space-y-6">
+              <AnimatePresence mode="popLayout">
+                {tasks.length > 0 ? (
+                  tasks.map((task) => (
+                    <motion.div
+                      key={task.id}
+                      layout
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ 
+                        opacity: task.completed ? 0.3 : 1, 
+                        x: 0
+                      }}
+                      exit={{ opacity: 0, scale: 0.9 }}
                       className={cn(
-                        "p-6 flex items-center gap-6 group transition-all border-slate-100",
-                        task.completed ? "bg-slate-50 border-transparent shadow-none" : "hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5"
+                        "group p-10 flex items-center gap-10 glass-card border-white/5 bg-white/[0.02] hover:bg-white/[0.05]",
+                        !task.completed && "hover:border-accent/40 hover:shadow-[0_20px_50px_rgba(0,0,0,0.2)] hover:translate-x-2"
                       )}
                     >
                       <button 
                         onClick={() => toggleTask(task.id, task.completed)}
                         className="text-accent transition-all duration-300"
                       >
-                        <motion.div
-                          initial={false}
-                          animate={{ 
-                            scale: task.completed ? [1, 1.3, 1] : 1,
-                            rotate: task.completed ? [0, 10, -10, 0] : 0
-                          }}
-                        >
+                        <motion.div initial={false} animate={{ scale: task.completed ? [1, 1.2, 1] : 1 }}>
                           {task.completed ? (
-                            <CheckCircle2 size={28} className="fill-accent text-white" />
+                            <CheckCircle2 size={36} className="fill-accent text-background" />
                           ) : (
-                            <Circle size={28} className="text-slate-200 group-hover:text-accent group-hover:scale-110 transition-all" />
+                            <Circle size={36} className="text-white/10 group-hover:text-accent transition-all" />
                           )}
                         </motion.div>
                       </button>
                       
                       <div className="flex-1">
                         <h3 className={cn(
-                          "text-lg font-bold text-slate-800 transition-all duration-500",
-                          task.completed && "line-through text-slate-400"
+                          "text-2xl font-black text-white uppercase tracking-tight transition-all duration-500 italic",
+                          task.completed && "line-through opacity-40"
                         )}>
-                          {task.text || task.title}
+                          {task.text}
                         </h3>
-                        <div className="flex items-center gap-4 mt-2">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                            <Clock size={12} /> {task.difficulty || 'Medium'}
+                        <div className="flex items-center gap-8 mt-4">
+                          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 flex items-center gap-3 italic">
+                            <Clock size={14} className="text-accent" /> {task.difficulty || 'Normal Ops'}
                           </span>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                            <Calendar size={12} /> {task.createdAt ? new Date(task.createdAt?.seconds * 1000).toLocaleDateString() : 'Today'}
+                          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 flex items-center gap-3 italic">
+                            <Database size={14} className="text-purple-500" /> Latency: 42ms
                           </span>
                         </div>
                       </div>
 
                       <button 
                         onClick={() => deleteTask(task.id)}
-                        className="opacity-0 group-hover:opacity-100 p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-4 text-white/10 hover:text-red-500 hover:bg-red-500/10 rounded-2xl transition-all"
                       >
-                        <Trash2 size={20} />
+                        <Trash2 size={28} />
                       </button>
-                    </GlassCard>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="text-center py-24 bg-slate-50 rounded-[40px] border-4 border-dashed border-slate-100">
-                  <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
-                    <Award className="text-slate-200" size={40} />
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="text-center py-40 glass-card border-dashed border-white/5 bg-transparent">
+                    <div className="w-24 h-24 bg-white/5 rounded-[40px] flex items-center justify-center mx-auto mb-10">
+                      <Sparkles className="text-white/10" size={48} />
+                    </div>
+                    <div className="tagline justify-center">No Active Units Detected</div>
+                    <Link to="/" className="mt-8 btn-primary inline-flex">Initialize Synthesis Matrix</Link>
                   </div>
-                  <p className="text-slate-400 font-bold text-lg">No tasks yet. Start by solving a problem!</p>
-                </div>
-              )}
-            </AnimatePresence>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-12">
-          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-              <TrendingUp className="text-accent" size={20} />
+          <div className="space-y-20">
+            <h2 className="text-3xl font-black text-white flex items-center gap-6 mb-12 uppercase tracking-tighter italic">
+              <div className="w-16 h-16 rounded-[28px] bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                <TrendingUp className="text-purple-500" size={28} />
+              </div>
+              Neural Health
+            </h2>
+            
+            <div className="glass-card p-12 border-white/5 bg-white/[0.01]">
+              <h3 className="font-black text-white/20 mb-12 uppercase tracking-[0.4em] text-[10px] italic">Synaptic Frequency</h3>
+              <div className="h-48 flex items-end gap-4">
+                {[40, 70, 45, 90, 65, 30, 50].map((h, i) => (
+                  <div key={i} className="flex-1 bg-white/5 rounded-[20px] relative group h-full">
+                    <motion.div 
+                      initial={{ height: 0 }}
+                      animate={{ height: `${h}%` }}
+                      transition={{ delay: i * 0.1, duration: 1.5, ease: "circOut" }}
+                      className="absolute bottom-0 left-0 right-0 bg-accent/20 group-hover:bg-accent/40 rounded-b-[20px] transition-colors"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between mt-10 text-[9px] font-black text-white/10 uppercase tracking-[0.3em]">
+                <span>Log_Start</span>
+                <span>//</span>
+                <span>Log_End</span>
+              </div>
             </div>
-            Insights
-          </h2>
-          
-          <GlassCard className="p-8 border-slate-100 shadow-2xl">
-            <h3 className="font-black text-slate-900 mb-8 uppercase tracking-widest text-[11px]">Weekly Activity</h3>
-            <div className="h-40 flex items-end gap-3">
-              {[40, 70, 45, 90, 65, 30, 50].map((h, i) => (
-                <div key={i} className="flex-1 bg-slate-50 rounded-2xl relative group overflow-hidden h-full">
-                  <motion.div 
-                    initial={{ height: 0 }}
-                    animate={{ height: `${h}%` }}
-                    transition={{ delay: i * 0.1, duration: 1, ease: "easeOut" }}
-                    className="absolute bottom-0 left-0 right-0 bg-accent/10 group-hover:bg-accent/30 transition-colors"
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-              <span>Mon</span>
-              <span>Sun</span>
-            </div>
-          </GlassCard>
 
-          <GlassCard className="p-10 bg-slate-900 text-white border-none shadow-2xl shadow-slate-200 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-accent/20 transition-colors" />
-            <h3 className="font-black mb-4 text-xl tracking-tight">Pro Strategist Tip</h3>
-            <p className="text-slate-400 leading-relaxed font-medium">
-              Break your "Daily Actions" into 25-minute focus blocks. It increases completion rates by 40%.
-            </p>
-            <div className="mt-8 flex items-center gap-2 text-accent font-black text-[10px] uppercase tracking-widest">
-              Learn More <ArrowRight size={14} />
+            <div className="p-14 bg-accent text-white border-none rounded-[56px] relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all shadow-[0_40px_80px_-20px_rgba(99,102,241,0.2)]">
+              <div className="absolute top-0 right-0 w-56 h-56 bg-white/10 blur-[80px] rounded-full -mr-28 -mt-28 group-hover:bg-white/20 transition-colors" />
+              <h3 className="font-black mb-8 text-3xl tracking-tighter uppercase italic leading-[0.85]">Cognitive <br /> Peak State.</h3>
+              <p className="text-white/80 font-black uppercase tracking-widest text-[10px] leading-relaxed">
+                Decomposing tasks into sub-atomic segments triggers immediate dopaminergic reward loops.
+              </p>
+              <div className="mt-12 flex items-center gap-4 font-black text-[10px] uppercase tracking-[0.4em]">
+                System Analytics <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
+              </div>
             </div>
-          </GlassCard>
+          </div>
         </div>
       </div>
     </div>

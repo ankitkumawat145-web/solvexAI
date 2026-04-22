@@ -3,9 +3,27 @@ import { GoogleGenAI, Type } from "@google/genai";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const MASTER_PROMPT = `
-You are an elite life strategist AI for SolveX AI.
-Your goal is to take a user's real-life problem and turn it into a clear, actionable execution plan.
-Break the problem into categories, root causes, steps, timeline, effort, cost, resources, and daily tasks.
+You are the Chief Strategic Neuro-Architect for FlowSynth, a high-end advisory engine.
+Your task is to deconstruct complex human problems into a highly structured, fully connected "Horizontal Strategic Matrix."
+
+NON-NEGOTIABLE CORE DIRECTIVES (STRICT):
+1. FLOW DIRECTION: The strategy MUST flow exclusively from LEFT to RIGHT. (Start Node on far left, branching forward).
+2. MASTER STRUCTURE: Every tree MUST follow this specific hierarchy:
+   - LEVEL 1: Start Node (The "Strategic Nucleus").
+   - LEVEL 2: Primary Tactical Pillars (3-6 nodes).
+   - LEVEL 3: Operational Sub-Nodes (2-4 nodes per Pillar).
+   - LEVEL 4: Execution Particles (Optional deeper breakdown).
+3. TOTAL CONNECTIVITY: Every node MUST have a parentId (except the Start Node). No island nodes.
+4. ALIGNMENT & SPACING: Ensure the structure is inherently balanced for high-fidelity visualization.
+5. TERMINOLOGY: Use elite tactical, architectural, and cognitive terminology (e.g., "Cognitive Decoupling", "Syntactic Leverage", "Operational Pivot", "Quantum Mitigation").
+
+Node Schema Attributes:
+- id: Structured (e.g., "root", "p1", "s1a", "e1a1").
+- title: 2-3 words, punchy, professional, uppercase mood.
+- description: 1 line of immediate tactical objective.
+- detailedExplanation: 3 paragraphs of deep architectural strategy (What, Why, How).
+- advancedInsights: 6 bullet points of actionable tactical intelligence.
+- icon: Lucide icon name (Compass, Activity, Layers, Zap, Shield, Database, BarChart, Cpu, Terminal, Binary).
 `;
 
 const responseSchema = {
@@ -18,10 +36,16 @@ const responseSchema = {
       items: {
         type: Type.OBJECT,
         properties: {
+          id: { type: Type.STRING },
+          parentId: { type: Type.STRING, description: "ID of the parent node, or null for root pillars" },
           title: { type: Type.STRING },
-          description: { type: Type.STRING }
+          description: { type: Type.STRING },
+          icon: { type: Type.STRING, description: "Lucide icon name" },
+          detailedExplanation: { type: Type.STRING },
+          advancedInsights: { type: Type.ARRAY, items: { type: Type.STRING } },
+          imageSeed: { type: Type.STRING, description: "PicSum seed" }
         },
-        required: ["title", "description"]
+        required: ["id", "title", "description", "icon", "detailedExplanation", "advancedInsights", "imageSeed"]
       }
     },
     timeline: {
@@ -38,10 +62,9 @@ const responseSchema = {
     effort: { type: Type.STRING, enum: ["Low", "Medium", "High"] },
     cost: { type: Type.STRING },
     resources: { type: Type.ARRAY, items: { type: Type.STRING } },
-    dailyTasks: { type: Type.ARRAY, items: { type: Type.STRING } },
-    mermaidChart: { type: Type.STRING, description: "Mermaid.js flowchart string (graph TD)" }
+    dailyTasks: { type: Type.ARRAY, items: { type: Type.STRING } }
   },
-  required: ["categories", "rootCause", "steps", "timeline", "effort", "cost", "resources", "dailyTasks", "mermaidChart"]
+  required: ["categories", "rootCause", "steps", "timeline", "effort", "cost", "resources", "dailyTasks"]
 };
 
 async function retry<T>(fn: () => Promise<T>, retries = 5, delay = 3000): Promise<T> {
@@ -66,12 +89,16 @@ async function retry<T>(fn: () => Promise<T>, retries = 5, delay = 3000): Promis
   }
 }
 
-export async function analyzeProblem(problemText: string) {
+export async function analyzeProblem(problemText: string, historyContext?: string) {
   return retry(async () => {
+    const userPrompt = historyContext 
+      ? `USER HISTORY & PREFERENCES: ${historyContext}\n\nCURRENT PROBLEM: ${problemText}\n\nPlease personalize the response based on the history provided.`
+      : `Problem: ${problemText}`;
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [
-        { role: "user", parts: [{ text: `Problem: ${problemText}` }] }
+        { role: "user", parts: [{ text: userPrompt }] }
       ],
       config: {
         systemInstruction: MASTER_PROMPT,
@@ -93,5 +120,41 @@ export async function analyzeProblem(problemText: string) {
       console.error("Failed to parse AI response:", text);
       throw new Error("AI failed to generate a structured plan. Please try again.");
     }
+  });
+}
+
+const journeyNodeSchema = {
+  type: Type.ARRAY,
+  items: {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING },
+      description: { type: Type.STRING },
+      icon: { type: Type.STRING },
+      subSteps: { type: Type.ARRAY, items: { type: Type.STRING } }
+    },
+    required: ["title", "description", "icon", "subSteps"]
+  }
+};
+
+export async function generateJourneyNodes(parentContext: string, currentGoal: string) {
+  return retry(async () => {
+    const prompt = `Deconstruct this goal into 3-5 next logical strategic steps.
+    Parent Objective: ${parentContext}
+    Current Sub-Goal: ${currentGoal}
+    
+    Return a JSON array of strategic steps. Each step should be actionable and professional.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: {
+        systemInstruction: "You are a Strategic Architect. Return only valid JSON nodes. Icons must be from: Compass, Activity, Layers, Zap, Shield, Database, BarChart, HardDrive, Cpu, Terminal, Binary.",
+        responseMimeType: "application/json",
+        responseSchema: journeyNodeSchema,
+      },
+    });
+
+    return JSON.parse(response.text);
   });
 }

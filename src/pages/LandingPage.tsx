@@ -1,206 +1,231 @@
 import { useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
-import { BrainCircuit, Target, Zap, ShieldCheck, ArrowRight } from "lucide-react";
+import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
+import { useRef, useState, useEffect } from "react";
+import { 
+  BrainCircuit, Target, ArrowRight, Layers, CheckCircle2, ChevronDown, 
+  Command, Database, Globe, MousePointer2, ShieldAlert, Zap, Cpu, Sparkles, Activity
+} from "lucide-react";
 import { ProblemInput } from "@/components/ProblemInput";
-import { GlassCard } from "@/components/GlassCard";
+import { Footer } from "@/components/Footer";
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const heroRef = useRef(null);
+  const [showStickySearch, setShowStickySearch] = useState(false);
+
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+
+  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowStickySearch(window.scrollY > 800);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleProblemSubmit = (text: string) => {
-    navigate("/solve", { state: { problem: text } });
+    navigate("/flow", { state: { problem: text } });
   };
 
   return (
-    <div className="relative overflow-hidden bg-white">
+    <div className="relative overflow-hidden bg-background text-foreground font-sans">
+      {/* Immersive Atmosphere */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 left-1/4 w-[1000px] h-[1000px] bg-accent/5 blur-[160px] rounded-full translate-y-[-50%]" />
+        <div className="absolute bottom-0 right-1/4 w-[800px] h-[800px] bg-accent-secondary/5 blur-[160px] rounded-full translate-y-[50%]" />
+        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+      </div>
+
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center pt-20">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 grid lg:grid-cols-2 gap-20 items-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+      <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center pt-32 pb-20 px-6">
+        <motion.div 
+          style={{ y: heroY, opacity: heroOpacity }}
+          className="max-w-6xl w-full text-center relative z-10"
+        >
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="tagline justify-center mb-10"
           >
-            <div className="tagline">Solve. Execute. Repeat.</div>
-            <h1 className="text-slate-900 leading-[1.05] mb-8 font-black">
-              Turn your problems into <br />
-              <span className="text-accent">clear action plans.</span>
-            </h1>
-            <p className="text-xl text-slate-500 max-w-lg mb-12 leading-relaxed font-medium">
-              Elite life strategist AI designed to break down your complex real-life challenges into daily, trackable micro-tasks.
-            </p>
-            
-            <div className="max-w-xl">
+            Tactical Architecture Engine // PRO-GRADE
+          </motion.div>
+          
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-7xl md:text-[8rem] font-black leading-[0.85] tracking-tighter uppercase italic mb-12"
+          >
+            Convert any <br />
+            <span className="text-accent underline decoration-accent/20 underline-offset-[20px]">Confusion</span> <br />
+            into a <span className="text-accent-secondary">Structured Plan.</span>
+          </motion.h1>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-16 font-black uppercase tracking-tight opacity-70 leading-snug"
+          >
+            AI-powered flow system that deconstructs chaos into a high-fidelity visual roadmap. Show exactly what to do next with professional precision.
+          </motion.p>
+          
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6 }}
+            className="max-w-2xl mx-auto relative group"
+          >
+            <div className="absolute -inset-10 bg-accent/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+            <div className="relative glass-card !bg-white/5 p-2">
               <ProblemInput onSubmit={handleProblemSubmit} />
             </div>
           </motion.div>
+        </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2, duration: 0.8 }}
-            className="hidden lg:block relative"
-          >
-            <div className="absolute -inset-10 bg-accent/5 blur-[100px] rounded-full" />
-            <GlassCard className="p-10 space-y-8 relative border-slate-100 shadow-2xl">
-              <div className="flex justify-between items-center border-b border-slate-50 pb-6">
-                <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400 font-black">Execution Dashboard</span>
-                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                  <Zap size={16} className="text-accent" />
-                </div>
-              </div>
-              
-              <div className="bg-slate-50/50 border border-slate-100 p-6 rounded-3xl space-y-4">
-                <div className="text-[10px] text-accent font-black uppercase tracking-widest">Current Focus</div>
-                <div className="text-lg font-black text-slate-900">Skill Transition: Web Architecture</div>
-                <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: "65%" }}
-                    transition={{ delay: 1, duration: 1.5 }}
-                    className="h-full bg-accent" 
-                  />
-                </div>
-                <div className="flex justify-between text-[11px] text-slate-500 font-bold">
-                  <span>65% Complete</span>
-                  <span>Day 14 of 90</span>
-                </div>
-              </div>
+        {/* Scroll Indicator */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-muted-foreground/30"
+        >
+          <span className="text-[9px] font-black uppercase tracking-[0.4em]">Initialize Transmission</span>
+          <ChevronDown size={20} className="animate-bounce" />
+        </motion.div>
+      </section>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white border border-slate-100 rounded-3xl p-6 text-center shadow-sm">
-                  <div className="text-3xl font-black text-slate-900">12</div>
-                  <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-2">Tasks Pending</div>
-                </div>
-                <div className="bg-white border border-slate-100 rounded-3xl p-6 text-center shadow-sm">
-                  <div className="text-3xl font-black text-slate-900">4.8</div>
-                  <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-2">Effort Score</div>
-                </div>
-              </div>
-
-              <button className="w-full bg-slate-900 text-white p-5 rounded-2xl font-black text-sm cursor-pointer hover:bg-accent transition-all shadow-xl shadow-slate-200 hover:shadow-accent/20">
-                View Full Roadmap
-              </button>
-            </GlassCard>
-          </motion.div>
+      {/* Problem-Solution Contrast */}
+      <section className="relative py-40 border-y border-white/5 bg-white/[0.02]">
+        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-12 text-foreground">
+          <ContrastCard 
+            title="Confusion" 
+            arrow="→" 
+            result="Clear Steps" 
+            desc="Stop circling in ambiguity. FlowSynth converts vague problems into sharp, actionable paths." 
+            icon={<Target size={24} />} 
+          />
+          <ContrastCard 
+            title="Overthinking" 
+            arrow="→" 
+            result="Structured Flow" 
+            desc="Our neural architect breaks down recursive thoughts into a linear, manageable strategy."
+            icon={<BrainCircuit size={24} />} 
+          />
+          <ContrastCard 
+            title="No Direction" 
+            arrow="→" 
+            result="Action Plan" 
+            desc="Move from stagnant theory to operational reality with every node mapped and connected."
+            icon={<Activity size={24} />} 
+          />
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-40 bg-slate-50/50">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="text-center mb-24">
-            <div className="tagline mx-auto justify-center">Features</div>
-            <h2 className="text-slate-900 font-black mb-6">Why SolveX AI?</h2>
-            <p className="text-slate-500 max-w-2xl mx-auto text-lg font-medium">We don't just give advice; we build your path to success with data-driven strategies.</p>
-          </div>
+      {/* Horizontal Flow Demo Section */}
+      <section className="py-60 px-6 relative overflow-hidden">
+        <div className="max-w-4xl mx-auto text-center mb-32 relative z-10">
+          <div className="tagline justify-center mb-8">Live Matrix Overview</div>
+          <h2 className="text-6xl md:text-[5rem] font-black tracking-tighter uppercase italic leading-[0.9]">
+            Engineered for <br />
+            <span className="text-accent underline decoration-white/10 underline-offset-[16px]">Cognitive Clarity.</span>
+          </h2>
+        </div>
+
+        <div className="max-w-7xl mx-auto py-20 px-8 glass-card border-none bg-white/[0.03] overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background z-20 pointer-events-none" />
           
-          <div className="grid md:grid-cols-3 gap-10">
-            <FeatureCard 
-              icon={<BrainCircuit className="text-accent" />}
-              title="AI Strategy Engine"
-              description="Our elite life strategist AI analyzes root causes and creates non-vague execution steps."
-              image="https://picsum.photos/seed/strategy/800/600"
-            />
-            <FeatureCard 
-              icon={<Target className="text-accent" />}
-              title="Action Mode"
-              description="Convert complex solutions into simple daily tasks that you can track and complete."
-              image="https://picsum.photos/seed/target/800/600"
-            />
-            <FeatureCard 
-              icon={<Zap className="text-accent" />}
-              title="Real-time Adjustment"
-              description="Plans that evolve with you. If a step is too hard, the AI recalibrates your path."
-              image="https://picsum.photos/seed/adjustment/800/600"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* About Section with Large Image */}
-      <section className="py-40 relative">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 grid lg:grid-cols-2 gap-24 items-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="relative rounded-[48px] overflow-hidden shadow-2xl aspect-square"
+          <motion.div 
+            animate={{ x: [0, -400, 0] }}
+            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            className="flex items-center gap-20 py-20 opacity-50 grayscale hover:grayscale-0 transition-all duration-1000"
           >
-            <img 
-              src="https://picsum.photos/seed/workspace/1200/1200" 
-              alt="Workspace" 
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-            <div className="image-overlay opacity-30" />
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="tagline">Our Philosophy</div>
-            <h2 className="text-slate-900 font-black mb-8 leading-tight">Built for the <br />Modern Founder</h2>
-            <p className="text-xl text-slate-500 mb-10 leading-relaxed font-medium">
-              SolveX AI was born from the need for clarity in an era of information overload. We help you filter the noise and focus on what truly moves the needle.
-            </p>
-            <ul className="space-y-6 mb-12">
-              {['Data-driven insights', 'Personalized roadmaps', 'Real-time progress tracking'].map((item, i) => (
-                <li key={i} className="flex items-center gap-4 text-slate-700 font-bold text-lg">
-                  <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
-                    <ShieldCheck className="text-accent" size={16} />
-                  </div>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <button onClick={() => navigate("/auth")} className="btn-primary flex items-center gap-3 px-10 py-5 text-lg">
-              Start Your Journey <ArrowRight size={20} />
-            </button>
+            <DemoNode title="Input Problem" icon={<Sparkles />} />
+            <DemoConnection />
+            <DemoNode title="Analyze Logic" icon={<Activity />} />
+            <DemoConnection />
+            <DemoNode title="Define Pillars" icon={<Layers />} />
+            <DemoConnection />
+            <DemoNode title="Tactical Steps" icon={<Cpu />} />
+            <DemoConnection />
+            <DemoNode title="Execution Goal" icon={<Zap />} />
           </motion.div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-40 bg-slate-900 text-white text-center relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <img src="https://picsum.photos/seed/abstract/1920/1080" alt="Abstract" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-        </div>
-        <div className="relative z-10 max-w-4xl mx-auto px-6">
-          <h2 className="text-white font-black text-5xl md:text-6xl mb-8 tracking-tight">Ready to solve your <br />next big challenge?</h2>
-          <p className="text-slate-400 mb-12 text-xl font-medium max-w-2xl mx-auto">Join thousands of high-performers who use SolveX AI to execute their vision with precision.</p>
-          <button onClick={() => navigate("/auth")} className="bg-white text-slate-900 px-12 py-5 rounded-2xl font-black text-xl hover:bg-accent hover:text-white transition-all shadow-2xl shadow-black/20">
-            Get Started for Free
-          </button>
+      {/* High-Fidelity Stats Section */}
+      <section className="py-40 border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-24">
+          <StatItem label="Processing Latency" value="1.2s" sub="Sub-millisecond Logic" />
+          <StatItem label="Structural Integrity" value="99.9%" sub="Fault-Tolerant Mapping" />
+          <StatItem label="Tactical Nodes" value="450k+" sub="Synthesized Strategies" />
+          <StatItem label="Logical Depth" value="L4" sub="Maximized Resolution" />
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }
 
-function FeatureCard({ icon, title, description, image }: { icon: React.ReactNode, title: string, description: string, image: string }) {
+function ContrastCard({ title, arrow, result, desc, icon }: any) {
   return (
-    <motion.div
-      whileHover={{ y: -12 }}
-      className="glass-card overflow-hidden group border-slate-100"
+    <motion.div 
+      whileHover={{ y: -10 }}
+      className="p-12 glass-card space-y-8"
     >
-      <div className="relative h-64 overflow-hidden">
-        <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" />
-        <div className="image-overlay opacity-20" />
-        <div className="absolute top-6 left-6 w-12 h-12 rounded-2xl bg-white/90 backdrop-blur-md flex items-center justify-center shadow-xl border border-white/20">
-          {icon}
-        </div>
+      <div className="w-16 h-16 rounded-3xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent">
+        {icon}
       </div>
-      <div className="p-10">
-        <h3 className="text-2xl font-black mb-4 text-slate-900 group-hover:text-accent transition-colors">{title}</h3>
-        <p className="text-slate-500 leading-relaxed font-medium">{description}</p>
+      <div>
+        <div className="flex items-center gap-4 text-xl font-black uppercase tracking-tighter mb-2">
+          <span className="opacity-40">{title}</span>
+          <span className="text-accent">{arrow}</span>
+          <span>{result}</span>
+        </div>
+        <p className="text-muted-foreground font-medium leading-relaxed uppercase text-[11px] tracking-widest opacity-60">
+          {desc}
+        </p>
       </div>
     </motion.div>
+  );
+}
+
+function DemoNode({ title, icon }: any) {
+  return (
+    <div className="shrink-0 flex flex-col items-center gap-6">
+      <div className="w-24 h-24 rounded-[32px] bg-slate-900 border border-white/10 flex items-center justify-center text-white shadow-2xl">
+        {icon}
+      </div>
+      <div className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">{title}</div>
+    </div>
+  );
+}
+
+function DemoConnection() {
+  return (
+    <div className="w-40 h-[2px] bg-gradient-to-r from-accent/50 to-accent-secondary/50 relative">
+      <motion.div 
+        animate={{ x: [0, 160] }}
+        transition={{ duration: 2, repeat: Infinity }}
+        className="absolute top-1/2 -translate-y-1/2 w-8 h-[4px] bg-white blur-[4px]"
+      />
+    </div>
+  );
+}
+
+function StatItem({ label, value, sub }: any) {
+  return (
+    <div className="space-y-4">
+      <div className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-40">{label}</div>
+      <div className="text-5xl font-black italic text-white tracking-tighter uppercase">{value}</div>
+      <div className="text-[9px] font-black uppercase tracking-[0.2em] text-accent">{sub}</div>
+    </div>
   );
 }
